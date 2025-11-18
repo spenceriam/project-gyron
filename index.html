@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Gyron</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        .initial-view.hidden, .ready-view.hidden {
+            display: none;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: #111827;
+        }
+        p {
+            color: #4b5563;
+            margin-bottom: 1.5rem;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        input[type="url"], input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .ready-view h2 {
+            color: #16a34a; /* Green */
+            font-size: 1.5rem;
+        }
+        .icon-selection {
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        .icon-selection label {
+            margin-bottom: 0.75rem;
+            display: block;
+            font-weight: 500;
+            color: #374151;
+        }
+        .icon-grid {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .icon-btn {
+            border: 2px solid #d1d5db;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 0.5rem;
+            cursor: pointer;
+            font-size: 1.5rem; /* Emoji size */
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .icon-btn.selected {
+            border-color: #007bff;
+            background-color: #e0efff;
+        }
+        #customIconInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- State 1: Initial View -->
+        <div class="initial-view">
+            <h1>Project Gyron</h1>
+            <p>Create a persistent web app from any URL</p>
+
+            <div class="input-group">
+                <label for="appName">App Name:</label>
+                <input type="text" id="appName" placeholder="e.g., My Mail App">
+            </div>
+            <div class="input-group">
+                <label for="appUrl">Enter URL:</label>
+                <input type="url" id="appUrl" placeholder="https://example.com" required>
+            </div>
+
+            <div class="icon-selection">
+                <label>Select an Icon:</label>
+                <div class="icon-grid">
+                    <!-- Icons will be populated by JS -->
+                </div>
+                <input type="file" id="customIconInput" accept="image/png, image/jpeg">
+            </div>
+
+            <button class="button" id="createAppBtn">Create App</button>
+        </div>
+
+        <!-- State 2: Ready to Install View -->
+        <div class="ready-view hidden">
+            <h2>✅ App Ready to Install!</h2>
+            <p>Your app will be installed using this browser's profile, preserving your logins and cookies.</p>
+            <button class="button" id="installAppBtn">Install App</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderIcons();
+            const initialView = document.querySelector('.initial-view');
+            const readyView = document.querySelector('.ready-view');
+            const createAppBtn = document.getElementById('createAppBtn');
+            const installAppBtn = document.getElementById('installAppBtn');
+            const appNameInput = document.getElementById('appName');
+            const appUrlInput = document.getElementById('appUrl');
+            const iconGrid = document.querySelector('.icon-grid');
+            const customIconInput = document.getElementById('customIconInput');
+            let deferredPrompt;
+            let selectedIconUrl = null;
+
+            const genericIcons = [
+                { name: 'Globe', url: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><path d=%22M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zM17.99 9H15V7h2.99c-.1-.58-.25-1.15-.42-1.7L15 6.42V5c0-1.1-.9-2-2-2h-1.42c-.55-.17-1.12-.32-1.7-.42V1h2.99c3.95.49 7 3.85 7 7.93 0 .62-.08 1.21-.21 1.79L15 10v-1z%22/></svg>' },
+                { name: 'Settings', url: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><path d=%22M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z%22/></svg>' },
+                { name: 'Cloud', url: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><path d=%22M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z%22/></svg>' },
+                { name: 'Work', url: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><path d=%22M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z%22/></svg>' },
+                { name: 'Star', url: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><path d=%22M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z%22/></svg>' }
+            ];
+
+            function renderIcons() {
+                iconGrid.innerHTML = '';
+                genericIcons.forEach(icon => {
+                    const btn = document.createElement('button');
+                    btn.className = 'icon-btn';
+                    btn.innerHTML = `<img src="${icon.url}" width="24" height="24">`;
+                    btn.dataset.iconUrl = icon.url;
+                    btn.addEventListener('click', () => selectIcon(btn, icon.url));
+                    iconGrid.appendChild(btn);
+                });
+                const customBtn = document.createElement('button');
+                customBtn.className = 'icon-btn';
+                customBtn.textContent = 'Custom';
+                customBtn.id = 'customIconBtn';
+                customBtn.addEventListener('click', () => customIconInput.click());
+                iconGrid.appendChild(customBtn);
+            }
+
+            function selectIcon(button, url) {
+                document.querySelectorAll('.icon-btn').forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                selectedIconUrl = url;
+            }
+
+            customIconInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const customIconDataUrl = e.target.result;
+                    selectIcon(document.getElementById('customIconBtn'), customIconDataUrl);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            const serviceWorkerCode = `
+              let appName = 'PWA';
+              let appUrl = '/';
+              let iconUrl;
+
+              self.addEventListener('message', event => {
+                  if (event.data.type === 'REGISTER_PWA') {
+                      appName = event.data.appName;
+                      appUrl = event.data.appUrl;
+                      iconUrl = event.data.iconUrl;
+                  }
+              });
+
+              self.addEventListener('fetch', event => {
+                  if (new URL(event.request.url).pathname === '/manifest.json') {
+                      const manifest = {
+                          name: appName,
+                          short_name: appName,
+                          start_url: appUrl,
+                          display: 'standalone',
+                          background_color: '#ffffff',
+                          theme_color: '#000000',
+                          icons: [
+                              {
+                                  src: iconUrl || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIBAMAAABfdrOtAAAAG1BMVEX///8AAAB2dnbq6uqtra1+fn7MzMxgYGAzMzO8FNIZAAAAAXRSTlMAQObYZgAAAFdJREFUeNrtwQENAAAAwqD3T20PBxQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAeQEJAAABQY0iYAAAAABJRU5ErkJggg==', // Default 144x144 icon
+                                  sizes: '144x144',
+                                  type: 'image/png'
+                              }
+                          ]
+                      };
+                      event.respondWith(
+                          new Response(JSON.stringify(manifest), {
+                              headers: { 'Content-Type': 'application/json' }
+                          })
+                      );
+                  }
+              });
+            `;
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                installAppBtn.disabled = false;
+                readyView.querySelector('p').textContent = "Your app will be installed using this browser's profile, preserving your logins and cookies.";
+            });
+
+            createAppBtn.addEventListener('click', async () => {
+                const appName = appNameInput.value.trim();
+                const appUrl = appUrlInput.value.trim();
+
+                if (!appName || !appUrl) {
+                    alert('Please provide both an App Name and a URL.');
+                    return;
+                }
+
+                initialView.classList.add('hidden');
+                readyView.classList.remove('hidden');
+                installAppBtn.textContent = \`Install "\${appName}"\`;
+                installAppBtn.disabled = true;
+                readyView.querySelector('p').textContent = "Preparing your app... The install button will enable shortly.";
+
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for(let registration of registrations) {
+                        await registration.unregister();
+                    }
+
+                    const blob = new Blob([serviceWorkerCode], { type: 'application/javascript' });
+                    const swUrl = URL.createObjectURL(blob);
+                    const registration = await navigator.serviceWorker.register(swUrl);
+
+                    await navigator.serviceWorker.ready;
+
+                    if (registration.active) {
+                        registration.active.postMessage({
+                            type: 'REGISTER_PWA',
+                            appName,
+                            appUrl,
+                            iconUrl: selectedIconUrl
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error during PWA creation:', error);
+                    alert('Failed to create the app. Please ensure your browser supports this feature and you are not in private mode.');
+                    readyView.classList.add('hidden');
+                    initialView.classList.remove('hidden');
+                }
+            });
+
+            installAppBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
