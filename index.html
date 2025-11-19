@@ -73,44 +73,10 @@
             color: #16a34a; /* Green */
             font-size: 1.5rem;
         }
-        .icon-selection {
-            margin-top: 1.5rem;
-            margin-bottom: 1.5rem;
-            text-align: left;
-        }
-        .icon-selection label {
-            margin-bottom: 0.75rem;
-            display: block;
-            font-weight: 500;
-            color: #374151;
-        }
-        .icon-grid {
-            display: flex;
-            gap: 0.5rem;
-        }
-        .icon-btn {
-            border: 2px solid #d1d5db;
-            background-color: #f9fafb;
-            border-radius: 8px;
-            padding: 0.5rem;
-            cursor: pointer;
-            font-size: 1.5rem; /* Emoji size */
-            width: 50px;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .icon-btn.selected {
-            border-color: #007bff;
-            background-color: #e0efff;
-        }
-        #customIconInput {
-            display: none;
-        }
     </style>
 </head>
 <body>
+
     <div class="container">
         <!-- State 1: Initial View -->
         <div class="initial-view">
@@ -160,11 +126,10 @@
 
               self.addEventListener('fetch', event => {
                   if (new URL(event.request.url).pathname === '/manifest.json') {
-                      const computerIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 -960 960 960"><path d="M334-120v-60h86v-100H140q-24 0-42-18t-18-42v-440q0-24 18-42t42-18h680q24 0 42 18t18 42v440q0 24-18 42t-42 18H540v100h86v60H334ZM140-340h680v-440H140v440Zm0 0v-440 440Z"/></svg>`;
-                      const iconSrc = `data:image/svg+xml,${encodeURIComponent(computerIconSvg)}`;
-                      const iconType = 'image/svg+xml';
-
-                      const manifest = {
+                    const computerIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 -960 960 960"><path d="M334-120v-60h86v-100H140q-24 0-42-18t-18-42v-440q0-24 18-42t42-18h680q24 0 42 18t18 42v440q0 24-18 42t-42 18H540v100h86v60H334ZM140-340h680v-440H140v440Zm0 0v-440 440Z"/></svg>`;
+                    const iconSrc = `data:image/svg+xml,${encodeURIComponent(computerIconSvg)}`;
+                    const iconType = 'image/svg+xml';
+                    const manifest = {
                           name: appName,
                           short_name: appName,
                           start_url: appUrl,
