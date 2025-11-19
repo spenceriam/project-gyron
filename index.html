@@ -111,13 +111,6 @@
     </style>
 </head>
 <body>
-    <div id="svg-icon-container" style="display: none;">
-        <svg id="icon-globe" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 -960 960 960"><path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm-43-61v-82q-35 0-59-26t-24-61v-44L149-559q-5 20-7 39.5t-2 39.5q0 130 84.5 227T437-141Zm294-108q44-48 66.5-107.5T820-480q0-106-58-192.5T607-799v18q0 35-24 61t-59 26h-87v87q0 17-13.5 28T393-568h-83v88h258q17 0 28 13t11 30v127h43q29 0 51 17t30 44Z"/></svg>
-        <svg id="icon-settings" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 -960 960 960"><path d="m388-80-20-126q-19-7-40-19t-37-25l-118 54-93-164 108-79q-2-9-2.5-20.5T185-480q0-9 .5-20.5T188-521L80-600l93-164 118 54q16-13 37-25t40-18l20-127h184l20 126q19 7 40.5 18.5T669-710l118-54 93 164-108 77q2 10 2.5 21.5t.5 21.5q0 10-.5 21t-2.5 21l108 78-93 164-118-54q-16 13-36.5 25.5T592-206L572-80H388Zm48-60h88l14-112q33-8 62.5-25t53.5-41l106 46 40-72-94-69q4-17 6.5-33.5T715-480q0-17-2-33.5t-7-33.5l94-69-40-72-106 46q-23-26-52-43.5T538-708l-14-112h-88l-14 112q-34 7-63.5 24T306-642l-106-46-40 72 94 69q-4 17-6.5 33.5T245-480q0 17 2.5 33.5T254-413l-94 69 40 72 106-46q24 24 53.5 41t62.5 25l14 112Zm44-210q54 0 92-38t38-92q0-54-38-92t-92-38q-54 0-92 38t-38 92q0 54 38 92t92 38Zm0-130Z"/></svg>
-        <svg id="icon-cloud" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 -960 960 960"><path d="M251-160q-88 0-149.5-61.5T40-371q0-78 50-137t127-71q20-97 94-158.5T482-799q112 0 189 81.5T748-522v24q72-2 122 46.5T920-329q0 69-50 119t-119 50H251Zm0-60h500q45 0 77-32t32-77q0-45-32-77t-77-32h-63v-84q0-91-61-154t-149-63q-88 0-149.5 63T267-522h-19q-62 0-105 43.5T100-371q0 63 44 107t107 44Zm229-260Z"/></svg>
-        <svg id="icon-work" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 -960 960 960"><path d="M140-120q-24 0-42-18t-18-42v-480q0-24 18-42t42-18h180v-100q0-24 18-42t42-18h200q24 0 42 18t18 42v100h180q24 0 42 18t18 42v480q0 24-18 42t-42 18H140Zm0-60h680v-480H140v480Zm240-540h200v-100H380v100ZM140-180v-480 480Z"/></svg>
-        <svg id="icon-star" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 -960 960 960"><path d="m323-245 157-94 157 95-42-178 138-120-182-16-71-168-71 167-182 16 138 120-42 178Zm-90 125 65-281L80-590l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Zm247-355Z"/></svg>
-    </div>
     <div class="container">
         <!-- State 1: Initial View -->
         <div class="initial-view">
@@ -133,13 +126,6 @@
                 <input type="url" id="appUrl" placeholder="https://example.com" required>
             </div>
 
-            <div class="icon-selection">
-                <label>Select an Icon:</label>
-                <div class="icon-grid">
-                    <!-- Icons will be populated by JS -->
-                </div>
-                <input type="file" id="customIconInput" accept="image/png, image/jpeg">
-            </div>
 
             <button class="button" id="createAppBtn">Create App</button>
         </div>
@@ -154,57 +140,37 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            renderIcons();
             const initialView = document.querySelector('.initial-view');
             const readyView = document.querySelector('.ready-view');
             const createAppBtn = document.getElementById('createAppBtn');
             const installAppBtn = document.getElementById('installAppBtn');
             const appNameInput = document.getElementById('appName');
             const appUrlInput = document.getElementById('appUrl');
-            const iconGrid = document.querySelector('.icon-grid');
-            const customIconInput = document.getElementById('customIconInput');
             let deferredPrompt;
-            let selectedIconUrl = null;
 
-            function renderIcons() {
-                const svgContainer = document.getElementById('svg-icon-container');
-                const icons = svgContainer.querySelectorAll('svg');
+            function generateIcon(appName) {
+                const size = 144;
+                const char = appName ? appName.charAt(0).toUpperCase() : '🔧';
+                const isEmoji = !appName;
 
-                icons.forEach(icon => {
-                    const btn = document.createElement('button');
-                    btn.className = 'icon-btn';
-                    btn.appendChild(icon.cloneNode(true));
-                    btn.addEventListener('click', () => {
-                        const iconSvg = icon.outerHTML;
-                        selectIcon(btn, iconSvg);
-                    });
-                    iconGrid.appendChild(btn);
-                });
-
-                const customBtn = document.createElement('button');
-                customBtn.className = 'icon-btn';
-                customBtn.textContent = 'Custom';
-                customBtn.id = 'customIconBtn';
-                customBtn.addEventListener('click', () => customIconInput.click());
-                iconGrid.appendChild(customBtn);
+                const svg = `
+                    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#003f5c;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#58508d;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <rect width="${size}" height="${size}" fill="url(#grad1)"/>
+                        <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle"
+                              font-family="Arial, sans-serif" font-size="${isEmoji ? size * 0.6 : size * 0.5}"
+                              font-weight="bold" fill="white">
+                            ${char}
+                        </text>
+                    </svg>
+                `;
+                return `data:image/svg+xml,${encodeURIComponent(svg)}`;
             }
-
-            function selectIcon(button, url) {
-                document.querySelectorAll('.icon-btn').forEach(btn => btn.classList.remove('selected'));
-                button.classList.add('selected');
-                selectedIconUrl = url;
-            }
-
-            customIconInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const customIconDataUrl = e.target.result;
-                    selectIcon(document.getElementById('customIconBtn'), customIconDataUrl);
-                };
-                reader.readAsDataURL(file);
-            });
 
             const serviceWorkerCode = `
               let appName = 'PWA';
@@ -221,9 +187,6 @@
 
               self.addEventListener('fetch', event => {
                   if (new URL(event.request.url).pathname === '/manifest.json') {
-                      const iconSrc = iconUrl ? `data:image/svg+xml,${encodeURIComponent(iconUrl)}` : 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIBAMAAABfdrOtAAAAG1BMVEX///8AAAB2dnbq6uqtra1+fn7MzMxgYGAzMzO8FNIZAAAAAXRSTlMAQObYZgAAAFdJREFUeNrtwQENAAAAwqD3T20PBxQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAeQEJAAABQY0iYAAAAABJRU5ErkJggg==';
-                      const iconType = iconUrl ? 'image/svg+xml' : 'image/png';
-
                       const manifest = {
                           name: appName,
                           short_name: appName,
@@ -233,9 +196,9 @@
                           theme_color: '#000000',
                           icons: [
                               {
-                                  src: iconSrc,
+                                  src: iconUrl,
                                   sizes: '144x144',
-                                  type: iconType
+                                  type: 'image/svg+xml'
                               }
                           ]
                       };
@@ -283,11 +246,12 @@
                     await navigator.serviceWorker.ready;
 
                     if (registration.active) {
+                        const iconUrl = generateIcon(appName);
                         registration.active.postMessage({
                             type: 'REGISTER_PWA',
                             appName,
                             appUrl,
-                            iconUrl: selectedIconUrl
+                            iconUrl: iconUrl
                         });
                     }
                 } catch (error) {
